@@ -18,49 +18,68 @@
     	  <p>
     		Voyage de {{ places[0]['from_place'] }} à {{ places[0]['to_place'] }}
     	  </p>
-        <button type="submit" name="otherway" class="btn btn-default btn-lg btn-block"><i class="fa fa-random" aria-hidden="true"></i></button>
-
-    	</div>
+        <div class="input-group">
+          <span class="input-group-btn">
+            <button type="submit" name="otherway" class="btn btn-default btn-lg btn-block"><i class="fa fa-random" aria-hidden="true"></i></button>
+          </span>
+          <span class="input-group-btn">
+            <button type="submit" name="othersize" class="btn btn-default btn-lg btn-block"><span class="glyphicon glyphicon-text-size" aria-hidden="true"></span></button>
+          </span>
+        </div>
+      </div>
 
       {% for journeys in journeysResult[1]['journeys'] %}
       <span class="icon-train" aria-hidden="true"></span>
-      <div class="panel panel-info">
-        <div class="panel-heading">
-          <span>
-            <i class="fa fa-train fa-lg" aria-hidden="true"></i> {{ journeys['sections'][1]['display_informations']['commercial_mode'] }} {{ journeys['sections'][1]['display_informations']['headsign'] }}
+      <div class="card">
+        <div class="card-header">
+          <i class="fa fa-train fa-lg" aria-hidden="true"></i> {{ journeys['sections'][1]['display_informations']['commercial_mode'] }} {{ journeys['sections'][1]['display_informations']['headsign'] }}
+        </div>
+        <div class="card-block">
+          <h4 class="card-title">
             <i class="fa fa-calendar-o fa-lg" aria-hidden="true"></i> {{ journeys['departure_date_time']|humanReadableTime }}
+          </h4>
+          <h6 class="card-subtitle mb-2 text-muted">
             {% if journeys['type'] == "best" %}
-            <span class="pull-right"><span class="glyphicon glyphicon-star" aria-hidden="true"></span><span class="glyphicon glyphicon-star" aria-hidden="true"></span><span class="glyphicon glyphicon-star" aria-hidden="true"></span></span>
+            <span class=""><span class="glyphicon glyphicon-star" aria-hidden="true"></span><span class="glyphicon glyphicon-star" aria-hidden="true"></span><span class="glyphicon glyphicon-star" aria-hidden="true"></span></span>
             {% elif journeys['type'] == "fastest" %}
-            <span class="pull-right"><span class="glyphicon glyphicon-star" aria-hidden="true"></span><span class="glyphicon glyphicon-star" aria-hidden="true"></span></span>
+            <span class=""><span class="glyphicon glyphicon-star" aria-hidden="true"></span><span class="glyphicon glyphicon-star" aria-hidden="true"></span></span>
 </span>
             {% elif journeys['type'] == "rapid" %}
-            <span class="pull-right"><span class="glyphicon glyphicon-star" aria-hidden="true"></span></span>
+            <span class=""><span class="glyphicon glyphicon-star" aria-hidden="true"></span></span>
             {% endif %}
-          </span>
-        </div>
-        <div class="panel-body">
-          <span class="glyphicon glyphicon-forward" aria-hidden="true"></span> {{ journeys['sections'][1]['display_informations']['direction'] }}<br>
-          {% for link in journeys['sections'][1]['links'] %}
-            {% if link['type'] == 'vehicle_journey' %}
-              {% set vehicleJourneyDetails = link['id']|getVehicleJourneyDetails %}
-              {% for disruption in vehicleJourneyDetails[1]['disruptions'] %}
-                {% if not disruption['status'] == 'past'%}
-                  <i class="fa fa-clock-o" aria-hidden="true"></i> <span class="label label-danger">Attention, retard signalé</span><br>
+          </h6>
+           <p class="card-text">
+              <span class="glyphicon glyphicon-forward" aria-hidden="true"></span> {{ journeys['sections'][1]['display_informations']['direction'] }}, {{ journeys['nb_transfers'] }} correspondance(s)<br>
+              {% for link in journeys['sections'][1]['links'] %}
+                {% if link['type'] == 'vehicle_journey' %}
+                  {% set vehicleJourneyDetails = link['id']|getVehicleJourneyDetails %}
+                  {% for disruption in vehicleJourneyDetails[1]['disruptions'] %}
+                    {% if disruption['status'] == 'active'%}
+                      <i class="fa fa-clock-o" aria-hidden="true"></i> <span class="label label-danger">Attention, retard signalé {{ disruption['severity']['effect'] }} </span><br>
+                      {% for impacted_stop in disruption['impacted_objects'][0]['impacted_stops'] %}
+                      {% if impacted_stop['arrival_status'] == "delayed" or impacted_stop['departure_status'] == "delayed" %}
+                      {% set diff = impacted_stop['amended_departure_time']|int  - impacted_stop['base_departure_time']|int  %}
+                      {% set timedifference = diff|timeDifference %}
+                      Retard en gare de {{ impacted_stop['stop_point']['name'] }}, {{ timedifference[0] }}h{{ timedifference[1] }}m
+                      {% endif %}
+                      {% endfor %}
+                    {% endif %}
+                  {% endfor %}
                 {% endif %}
               {% endfor %}
-            {% endif %}
-          {% endfor %}
-          <i class="fa fa-map-marker" aria-hidden="true"></i> {{ journeys['arrival_date_time']|humanReadableTime }} (Durée {{ journeys['duration']|secondsToTime }})<br>
-          <i class="fa fa-road" aria-hidden="true"></i> {% for section in journeys['sections'] %}
-          {% for stop in section['stop_date_times'] %}
-          {{ stop['stop_point']['name'] }}
-          {% endfor %}
-          {% endfor %}
+              <br>
+              <i class="fa fa-map-marker" aria-hidden="true"></i> {{ journeys['arrival_date_time']|humanReadableTime }} (Durée {{ journeys['duration']|secondsToTime }})<br>
+              <i class="fa fa-road" aria-hidden="true"></i> {% for section in journeys['sections'] %}
+              {% for stop in section['stop_date_times'] %}
+              {{ stop['stop_point']['name'] }}
+              {% endfor %}
+              {% endfor %}
+            </p>
+          </div>
         </div>
-      </div>
+      <br>
       {% endfor %}
-    </div>
+
   </form>
   </body>
 </html>

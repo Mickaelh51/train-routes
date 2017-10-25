@@ -1,0 +1,62 @@
+<html>
+  <head>
+    <title>Train Routes Mini</title>
+    <link href="/static/favicon.ico" rel="icon" type="image/x-icon" />
+    <link rel="stylesheet" media="screen" href ="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href ="/static/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/static/css/bootstrap-theme.min.css">
+    <meta name="viewport" content = "width=device-width, initial-scale=1.0">
+    <script src="/static/js/jquery-3.1.1.js"></script>
+    <script src="https://use.fontawesome.com/19c39f1c15.js"></script>
+  </head>
+  <body>
+    <br>
+    <form action="" method="post" role="form">
+    <div class="container">
+        <p>
+    		De {{ places[0]['from_place'] }}<br>A {{ places[0]['to_place'] }}
+        </p>
+
+      {% for journeys in journeysResult[1]['journeys'] %}
+
+          <span>
+            <i class="fa fa-train" aria-hidden="true"></i> {{ journeys['sections'][1]['display_informations']['commercial_mode'] }} {{ journeys['sections'][1]['display_informations']['headsign'] }}
+            <i class="fa fa-calendar-o" aria-hidden="true"></i> {{ journeys['departure_date_time']|humanReadableTime }}
+            {% if journeys['type'] == "best" %}
+            <span class="pull-right"><span class="glyphicon glyphicon-star" aria-hidden="true"></span><span class="glyphicon glyphicon-star" aria-hidden="true"></span><span class="glyphicon glyphicon-star" aria-hidden="true"></span></span>
+            {% elif journeys['type'] == "fastest" %}
+            <span class="pull-right"><span class="glyphicon glyphicon-star" aria-hidden="true"></span><span class="glyphicon glyphicon-star" aria-hidden="true"></span></span></span>
+            {% elif journeys['type'] == "rapid" %}
+            <span class="pull-right"><span class="glyphicon glyphicon-star" aria-hidden="true"></span></span>
+            {% endif %}
+            {% for link in journeys['sections'][1]['links'] %}
+              {% if link['type'] == 'vehicle_journey' %}
+                {% set vehicleJourneyDetails = link['id']|getVehicleJourneyDetails %}
+                {% for disruption in vehicleJourneyDetails[1]['disruptions'] %}
+                  {% if disruption['status'] == 'active'%}
+                    <i class="fa fa-exclamation-triangle fa-2x pull-right" aria-hidden="true"></i>
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+            {% endfor %}
+          </span>
+          <br>
+          <span class="glyphicon glyphicon-forward" aria-hidden="true"></span> {{ journeys['sections'][1]['display_informations']['direction']|removeTownFromStationName }}, {{ journeys['nb_transfers'] }} correspondance(s)<br>
+
+          <i class="fa fa-map-marker" aria-hidden="true"></i> {{ journeys['arrival_date_time']|humanReadableTime }} (Durée {{ journeys['duration']|secondsToTime }})<br>
+        <hr>
+      {% endfor %}
+    </div>
+    <div class="col-lg-6">
+    <div class="input-group">
+      <span class="input-group-btn">
+        <button type="submit" name="otherway" class="btn btn-default btn-lg btn-block"><i class="fa fa-random" aria-hidden="true"></i></button>
+      </span>
+      <span class="input-group-btn">
+        <button type="submit" name="othersize" class="btn btn-default btn-lg btn-block"><span class="glyphicon glyphicon-text-size" aria-hidden="true"></span></button>
+      </span>
+    </div>
+
+  </form>
+  </body>
+</html>

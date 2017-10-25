@@ -3,6 +3,7 @@ from flask import render_template, request, redirect
 import requests
 from requests.auth import HTTPBasicAuth
 import datetime
+import re
 
 
 @app.template_filter('secondsToTime')
@@ -10,6 +11,20 @@ def _jinja2_filter_datetime(seconds):
     minutes = seconds%3600/60
     hours = seconds/3600
     return str(hours) + ":" + str(minutes)
+
+
+@app.template_filter('removeTownFromStationName')
+def _jinja2_filter_datetime(station):
+    parts = station.split('(')
+    return parts[0].rstrip()
+
+
+@app.template_filter('timeDifference')
+def _jinja2_filter_datetime(diff):
+    print "timeDifference"
+    diffstr = "%06d" % diff
+    timeArray = re.compile('(..)').findall(diffstr)
+    return timeArray
 
 
 @app.template_filter('humanReadableTime')
@@ -46,8 +61,8 @@ def _jinja2_filter_datetime(vehicleJourney):
     return ret
 
 
-@app.route("/route/<string:from_place>/<string:to_place>", methods=['GET', 'POST'])
-def routes(from_place, to_place):
+@app.route("/route/<string:from_place>/<string:to_place>/<string:style>", methods=['GET', 'POST'])
+def routes(from_place, to_place, style):
     places = []
     print request.form
 
@@ -55,7 +70,15 @@ def routes(from_place, to_place):
         print "otherway"
         print to_place
         print from_place
-        return redirect('/route/' + to_place + '/' + from_place)
+        return redirect('/route/' + to_place + '/' + from_place + '/' + style)
+
+    if 'othersize' in request.form:
+        print "othersize"
+        if style == "mini":
+            return redirect('/route/' + from_place + '/' + to_place + '/classic')
+        else:
+            return redirect('/route/' + from_place + '/' + to_place + '/mini')
+
 
     # Get places IDs
     fromPlaceIdResult = getPlaceID(from_place)
@@ -73,4 +96,7 @@ def routes(from_place, to_place):
     date = datetime.datetime.today().strftime('%Y%m%d %R:%M')
     journeysResult = getJourneys(fromPlaceID, toPlaceID, date)
 
-    return render_template("route.html", places=places, journeysResult=journeysResult)
+    if style == "mini":
+        return render_template("route_mini.html", places=places, journeysResult=journeysResult)
+    else:
+        return render_template("route.html", places=places, journeysResult=journeysResult)
