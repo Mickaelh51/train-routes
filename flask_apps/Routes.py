@@ -35,6 +35,16 @@ def getJourneys(srcStation, dstStation, departureDateTime):
     ret.append(req.json())
     return ret
 
+@app.template_filter('getVehicleJourneyDetails')
+def _jinja2_filter_datetime(vehicleJourney):
+    print "jinja2_filter - getVehicleJourneyDetails for " + vehicleJourney
+    req = requests.get("https://api.sncf.com/v1/coverage/sncf/vehicle_journeys/" + vehicleJourney, auth=HTTPBasicAuth(app.config['SNCFAPIKEY'], ''))
+    ret = []
+    ret.append(req.status_code)
+    ret.append(req.json())
+    #print req.json()
+    return ret
+
 
 @app.route("/route/<string:from_place>/<string:to_place>", methods=['GET', 'POST'])
 def routes(from_place, to_place):
